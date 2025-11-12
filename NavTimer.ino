@@ -77,6 +77,7 @@ double distance = 0;
 double distance_decimal = 0;
 int enter_distance = 1;
 double speed[5];
+double speed_flown[5];
 int speed_index = 0;
 int time_at_speed_check;
 
@@ -751,6 +752,8 @@ void Timer_Screen() {
         display.print(speed_index - (3 - i));
       display.print(": ");
       display.print(speed[i]);
+      display.print(" kts / ");
+      display.print(speed_flown[i]);
       display.print(" kts");
     }
   }
@@ -1024,20 +1027,26 @@ void Distance_Entry(int num, int unit) {
 void Speed_Clear() {
   for (int i = 0; i < 5; i++) {
     speed[i] = 0;
+    speed_flown[i] = 0;
   }
-  speed[0] = (current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) / ((current_leg->leg_time/60.0)/60.0);
-  speed_index = 1;
+  //speed[0] = (current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) / ((current_leg->leg_time/60.0)/60.0);
+  speed_index = 0;
 }
 
 void Ground_Speed_Push_Back() {
   if (speed_index > 3) {
     for (int i = 1; i < 4; i++) {
       speed[i-1] = speed[i];
+      speed_flown[i-1] = speed_flown[i];
     }
     speed[3] = (distance + (distance_decimal / 10.0)) / ((time_at_speed_check/60.0)/60.0);
+    speed_flown[3] = ((current_leg->distance + (current_leg->distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
+    //((current_leg->leg_distance + (current_leg->leg_distance_decimal/10.0)) - (distance + (distance_decimal / 10.0))) / (((current_leg->leg_time - current_leg->leg_time_left)/60.0)/60.0);
   }
   else {
     speed[speed_index] = (distance + (distance_decimal / 10.0)) / ((time_at_speed_check/60.0)/60.0);
+    speed_flown[speed_index] = ((current_leg->distance + (current_leg->distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
+    //((current_leg->leg_distance + (current_leg->leg_distance_decimal/10.0)) - (distance + (distance_decimal / 10.0))) / (((current_leg->leg_time - current_leg->leg_time_left)/60.0)/60.0);
   }
   speed_index++;
 }
@@ -1080,6 +1089,32 @@ int Get_Current_Sum_Time() {
   }
   return total_time;
 }
+
+int Get_Current_Total_Time() {
+  int total_leg_time = 0;
+  struct Leg* tempLeg = first_leg_ptr;
+  for (int i = 0; i < num_of_current_leg; i++) {
+    total_leg_time += tempLeg->leg_time;
+    tempLeg = tempLeg->next_leg;
+  }
+  return total_leg_time;
+}
+
+double Get_Current_Sum_Distance() {
+  double total_distance = 0;
+  struct Leg* tempLeg = first_leg_ptr;
+  for (int i = 0; i < num_of_current_leg; i++) {
+    total_distance += tempLeg->leg_distance + (tempLeg->leg_distance_decimal / 10.0);
+    tempLeg = tempLeg->next_leg;
+  }
+  return total_distance;
+}
+/*
+double Get_Speed_Flown() {
+  total distance - distance left to go = distance traveled
+  total time - time left = time taken
+  distance traveled / time taken = avg speed
+}*/
 
 //FUNCTION FOR SCREEN TO CONFIRM REMOVING A LEG
 void Confirm_Remove_Leg_Screen() {
