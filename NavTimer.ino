@@ -80,6 +80,9 @@ double speed[5];
 double speed_flown[5];
 int speed_index = 0;
 int time_at_speed_check;
+int time_at_last_speed_check;
+double distance_at_last_speed_check = 0;
+double distance_at_last_speed_check_decimal = 0;
 
 uint8_t Current_GPS_Hrs;
 uint8_t Current_GPS_Mins;
@@ -1029,6 +1032,9 @@ void Speed_Clear() {
     speed[i] = 0;
     speed_flown[i] = 0;
   }
+  distance_at_last_speed_check = current_leg->leg_distance;
+  distance_at_last_speed_check_decimal = current_leg->leg_distance_decimal;
+  time_at_last_speed_check = Get_Current_Sum_Time();
   //speed[0] = (current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) / ((current_leg->leg_time/60.0)/60.0);
   speed_index = 0;
 }
@@ -1040,14 +1046,19 @@ void Ground_Speed_Push_Back() {
       speed_flown[i-1] = speed_flown[i];
     }
     speed[3] = (distance + (distance_decimal / 10.0)) / ((time_at_speed_check/60.0)/60.0);
-    speed_flown[3] = ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
+    speed_flown[3] = ((distance_at_last_speed_check + (distance_at_last_speed_check_decimal / 10.0)) - ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)))) / (((time_at_last_speed_check - time_at_speed_check)/60.0)/60.0);
+    // ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
     //((current_leg->leg_distance + (current_leg->leg_distance_decimal/10.0)) - (distance + (distance_decimal / 10.0))) / (((current_leg->leg_time - current_leg->leg_time_left)/60.0)/60.0);
   }
   else {
     speed[speed_index] = (distance + (distance_decimal / 10.0)) / ((time_at_speed_check/60.0)/60.0);
-    speed_flown[speed_index] = ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
+    speed_flown[speed_index] = ((distance_at_last_speed_check + (distance_at_last_speed_check_decimal / 10.0)) - ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)))) / (((time_at_last_speed_check - time_at_speed_check)/60.0)/60.0);
+    // ((current_leg->leg_distance + (current_leg->leg_distance_decimal / 10.0)) - (distance + (distance_decimal / 10.0))) / (((Get_Current_Total_Time() - time_at_speed_check)/60.0)/60.0);
     //((current_leg->leg_distance + (current_leg->leg_distance_decimal/10.0)) - (distance + (distance_decimal / 10.0))) / (((current_leg->leg_time - current_leg->leg_time_left)/60.0)/60.0);
   }
+  distance_at_last_speed_check = current_leg->leg_distance;
+  distance_at_last_speed_check_decimal = current_leg->leg_distance_decimal;
+  time_at_last_speed_check = time_at_speed_check;
   speed_index++;
 }
 
